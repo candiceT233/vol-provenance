@@ -3074,13 +3074,13 @@ H5VL_provenance_dataset_create(void *obj, const H5VL_loc_params_t *loc_params,
 #ifdef ENABLE_PROVNC_LOGGING
     printf("------- PROVENANCE VOL DATASET Create\n");
 #endif
-#ifdef DATA_PROVNC_LOGGING
-    printf("[%ld] H5VLdataset_create DatasetName[%s]\n", get_time_usec(), ds_name);
-#endif
+
     m1 = get_time_usec();
     under = H5VLdataset_create(o->under_object, loc_params, o->under_vol_id, ds_name, lcpl_id, type_id, space_id, dcpl_id,  dapl_id, dxpl_id, req);
     m2 = get_time_usec();
-
+#ifdef DATA_PROVNC_LOGGING
+    printf("[%ld] H5VLdataset_create DatasetName[%s]\n", get_time_usec(), ds_name);
+#endif
     if(under)
         dset = _obj_wrap_under(under, o, ds_name, H5I_DATASET, dxpl_id, req);
     else
@@ -3118,14 +3118,13 @@ H5VL_provenance_dataset_open(void *obj, const H5VL_loc_params_t *loc_params,
 #ifdef ENABLE_PROVNC_LOGGING
     printf("------- PROVENANCE VOL DATASET Open\n");
 #endif
-#ifdef DATA_PROVNC_LOGGING
-    printf("[%ld] H5VLdataset_open DatasetName[%s]\n", get_time_usec(), ds_name);
-#endif
 
     m1 = get_time_usec();
     under = H5VLdataset_open(o->under_object, loc_params, o->under_vol_id, ds_name, dapl_id, dxpl_id, req);
     m2 = get_time_usec();
-
+#ifdef DATA_PROVNC_LOGGING
+    printf("[%ld] H5VLdataset_open DatasetName[%s]\n", get_time_usec(), ds_name);
+#endif
     if(under)
         dset = _obj_wrap_under(under, o, ds_name, H5I_DATASET, dxpl_id, req);
     else
@@ -3170,14 +3169,13 @@ H5VL_provenance_dataset_read(void *dset, hid_t mem_type_id, hid_t mem_space_id,
     // Retrieve MPI-IO transfer option
     H5Pget_dxpl_mpio(plist_id, &xfer_mode);
 #endif /* H5_HAVE_PARALLEL */
-#ifdef DATA_PROVNC_LOGGING
-    dataset_prov_info_t * dset_info = (dataset_prov_info_t*)o->generic_prov_info;
-    printf("[%ld] H5VLdataset_read DatasetName[%s]\n", get_time_usec(), dset_info->obj_info.name);
-#endif
     m1 = get_time_usec();
     ret_value = H5VLdataset_read(o->under_object, o->under_vol_id, mem_type_id, mem_space_id, file_space_id, plist_id, buf, req);
     m2 = get_time_usec();
-
+#ifdef DATA_PROVNC_LOGGING
+    // dataset_prov_info_t * dset_info = (dataset_prov_info_t*)o->generic_prov_info;
+    // printf("[%ld] H5VLdataset_read DatasetName[%s]\n", get_time_usec(), dset_info->obj_info.name);
+#endif
     /* Check for async request */
     if(req && *req)
         *req = H5VL_provenance_new_obj(*req, o->under_vol_id, o->prov_helper);
@@ -3255,18 +3253,16 @@ H5VL_provenance_dataset_write(void *dset, hid_t mem_type_id, hid_t mem_space_id,
     H5Pget_dxpl_mpio(plist_id, &xfer_mode);
 #endif /* H5_HAVE_PARALLEL */
 
-#ifdef DATA_PROVNC_LOGGING
-    dataset_prov_info_t * dset_info = (dataset_prov_info_t*)o->generic_prov_info;
-    printf("[%ld] H5VLdataset_write DatasetName[%s]\n", get_time_usec(), dset_info->obj_info.name);
-#endif
-
 //H5VLdataset_write: framework
 // VOL B do IO, so A ask B to write.    o->under_object is a B envelop.
     // reuse A envelop
     m1 = get_time_usec();
     ret_value = H5VLdataset_write(o->under_object, o->under_vol_id, mem_type_id, mem_space_id, file_space_id, plist_id, buf, req);
     m2 = get_time_usec();
-
+#ifdef DATA_PROVNC_LOGGING
+    // dataset_prov_info_t * dset_info = (dataset_prov_info_t*)o->generic_prov_info;
+    // printf("[%ld] H5VLdataset_write DatasetName[%s]\n", get_time_usec(), dset_info->obj_info.name);
+#endif
     /* Check for async request */
     if(req && *req)
         *req = H5VL_provenance_new_obj(*req, o->under_vol_id, o->prov_helper);
@@ -3333,15 +3329,15 @@ H5VL_provenance_dataset_get(void *dset, H5VL_dataset_get_args_t *args,
 #ifdef ENABLE_PROVNC_LOGGING
     printf("------- PROVENANCE VOL DATASET Get\n");
 #endif
+
+    m1 = get_time_usec();
+    ret_value = H5VLdataset_get(o->under_object, o->under_vol_id, args, dxpl_id, req);
+    m2 = get_time_usec();
 #ifdef DATA_PROVNC_LOGGING
     dataset_prov_info_t* dset_info = (dataset_prov_info_t*)o->generic_prov_info;
     assert(dset_info);
     printf("[%ld] H5VLdataset_get DatasetName[%s]\n", get_time_usec(), dset_info->obj_info.name);
 #endif
-    m1 = get_time_usec();
-    ret_value = H5VLdataset_get(o->under_object, o->under_vol_id, args, dxpl_id, req);
-    m2 = get_time_usec();
-
     /* Check for async request */
     if(req && *req)
         *req = H5VL_provenance_new_obj(*req, o->under_vol_id, o->prov_helper);
@@ -3532,25 +3528,26 @@ H5VL_provenance_dataset_close(void *dset, hid_t dxpl_id, void **req)
 #ifdef ENABLE_PROVNC_LOGGING
     printf("------- PROVENANCE VOL DATASET Close\n");
 #endif
+
+    m1 = get_time_usec();
+    ret_value = H5VLdataset_close(o->under_object, o->under_vol_id, dxpl_id, req);
+    m2 = get_time_usec();
 #ifdef DATA_PROVNC_LOGGING
     dataset_prov_info_t* dset_info = (dataset_prov_info_t*)o->generic_prov_info;
     assert(dset_info);
     printf("[%ld] H5VLdataset_close DatasetName[%s]\n", get_time_usec(), dset_info->obj_info.name);
 #endif
-    m1 = get_time_usec();
-    ret_value = H5VLdataset_close(o->under_object, o->under_vol_id, dxpl_id, req);
-    m2 = get_time_usec();
-
     /* Check for async request */
     if(req && *req)
         *req = H5VL_provenance_new_obj(*req, o->under_vol_id, o->prov_helper);
 
+#ifdef DATA_PROVNC_LOGGING
     /* Release our wrapper, if underlying dataset was closed */
     if(ret_value >= 0){
-        dataset_prov_info_t* dset_info;
+        // dataset_prov_info_t* dset_info;
 
-        dset_info = (dataset_prov_info_t*)o->generic_prov_info;
-        assert(dset_info);
+        // dset_info = (dataset_prov_info_t*)o->generic_prov_info;
+        // assert(dset_info);
 
         prov_write(o->prov_helper, __func__, get_time_usec() - start);
         dataset_stats_prov_write(dset_info);//output stats
@@ -3559,7 +3556,7 @@ H5VL_provenance_dataset_close(void *dset, hid_t dxpl_id, void **req)
 
         H5VL_provenance_free_obj(o);
     }
-
+#endif
     TOTAL_PROV_OVERHEAD += (get_time_usec() - start - (m2 - m1));
     return ret_value;
 } /* end H5VL_provenance_dataset_close() */
@@ -3913,13 +3910,14 @@ H5VL_provenance_file_create(const char *name, unsigned flags, hid_t fcpl_id,
     }
 #endif /* H5_HAVE_PARALLEL */
 
-#ifdef DATA_PROVNC_LOGGING
-    printf("[%ld] H5VLfile_create FileName[%s]\n",get_time_usec(),name);
-#endif
     /* Open the file with the underlying VOL connector */
     m1 = get_time_usec();
     under = H5VLfile_create(name, flags, fcpl_id, under_fapl_id, dxpl_id, req);
     m2 = get_time_usec();
+
+#ifdef DATA_PROVNC_LOGGING
+    printf("[%ld] H5VLfile_create FileName[%s]\n",get_time_usec(),name);
+#endif
 
     if(under) {
         if(!PROV_HELPER)
@@ -4109,15 +4107,16 @@ H5VL_provenance_file_get(void *file, H5VL_file_get_args_t *args, hid_t dxpl_id,
 #ifdef ENABLE_PROVNC_LOGGING
     printf("------- PROVENANCE VOL FILE Get\n");
 #endif
+
+    m1 = get_time_usec();
+    ret_value = H5VLfile_get(o->under_object, o->under_vol_id, args, dxpl_id, req);
+    m2 = get_time_usec();
+
 #ifdef DATA_PROVNC_LOGGING
     file_prov_info_t* file_info = (file_prov_info_t*)o->generic_prov_info;
     assert(file_info);
     printf("[%ld] H5VLfile_get Filename[%s]\n", get_time_usec(), file_info->file_name);
 #endif
-
-    m1 = get_time_usec();
-    ret_value = H5VLfile_get(o->under_object, o->under_vol_id, args, dxpl_id, req);
-    m2 = get_time_usec();
 
     /* Check for async request */
     if(req && *req)
@@ -4296,14 +4295,16 @@ H5VL_provenance_file_optional(void *file, H5VL_optional_args_t *args,
 #ifdef ENABLE_PROVNC_LOGGING
     printf("------- PROVENANCE VOL File Optional\n");
 #endif
+
+    m1 = get_time_usec();
+    ret_value = H5VLfile_optional(o->under_object, o->under_vol_id, args, dxpl_id, req);
+    m2 = get_time_usec();
+
 #ifdef DATA_PROVNC_LOGGING
     file_prov_info_t* file_info = (file_prov_info_t*)o->generic_prov_info;
     assert(file_info);
     printf("[%ld] H5VLfile_optional FileName[%s]\n", get_time_usec(), file_info->file_name);
 #endif
-    m1 = get_time_usec();
-    ret_value = H5VLfile_optional(o->under_object, o->under_vol_id, args, dxpl_id, req);
-    m2 = get_time_usec();
 
     /* Check for async request */
     if(req && *req)
@@ -5568,20 +5569,19 @@ H5VL_provenance_blob_put(void *obj, const void *buf, size_t size,
 #ifdef ENABLE_PROVNC_LOGGING
     printf("------- PROVENANCE VOL BLOB Put\n");
 #endif
-#ifdef DATA_PROVNC_LOGGING
-    printf("[%ld] H5VLblob_put ID[%zu] Size[%ld]\n",get_time_usec(), blob_id, size);
-#endif
+
     m1 = get_time_usec();
     ret_value = H5VLblob_put(o->under_object, o->under_vol_id, buf, size,
         blob_id, ctx);
     m2 = get_time_usec();
 
 #ifdef DATA_PROVNC_LOGGING
+    printf("[%ld] H5VLblob_put ID[%zu] Size[%ld]\n",get_time_usec(), blob_id, size);
+
     /* candice added record blob put count */
     if(ret_value >= 0) {
         // H5VL_prov_file_info_t *
         // dataset_prov_info_t * dset_info = (dataset_prov_info_t*)o->generic_prov_info;
-
 
         file_prov_info_t* file_info = (file_prov_info_t*)o->generic_prov_info;
         dataset_prov_info_t * dset_info = (dataset_prov_info_t*)file_info->opened_datasets;
@@ -5593,9 +5593,6 @@ H5VL_provenance_blob_put(void *obj, const void *buf, size_t size,
         dset_info->total_bytes_blob_put += size;
         dset_info->blob_put_cnt++;
         dset_info->total_blob_put_time += (m2 - m1);
-
-        
-
     }
 #endif
 
@@ -5626,19 +5623,15 @@ H5VL_provenance_blob_get(void *obj, const void *blob_id, void *buf,
 #ifdef ENABLE_PROVNC_LOGGING
     printf("------- PROVENANCE VOL BLOB Get\n");
 #endif
-#ifdef DATA_PROVNC_LOGGING
-    // dataset_prov_info_t * dset_info = (dataset_prov_info_t*)o->generic_prov_info;
-    printf("[%ld] H5VLblob_get ID[%zu] Size[%ld]\n",get_time_usec(), blob_id, size);
-    
-#endif
-
 
     m1 = get_time_usec();
     ret_value = H5VLblob_get(o->under_object, o->under_vol_id, blob_id, buf,size, ctx);
     m2 = get_time_usec();
 
-
 #ifdef DATA_PROVNC_LOGGING
+    // dataset_prov_info_t * dset_info = (dataset_prov_info_t*)o->generic_prov_info;
+    printf("[%ld] H5VLblob_get ID[%zu] Size[%ld]\n",get_time_usec(), blob_id, size);
+
     /* candice added record blob put count */
     if(ret_value >= 0) {
 

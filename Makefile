@@ -1,8 +1,10 @@
 #Your HDF5 install path
 HDF5_DIR=/home/mtang11/install/hdf5-1_13_1
 
+# HDF5_DIR=/Users/koziol/HDF5/github/hpc-io/async_vol_register_optional/build_parallel_debug/hdf5
+
 CC=mpicc
-# CC=gcc
+#CC=gcc-10
 AR=ar
 
 DEBUG=-DENABLE_PROVNC_LOGGING -DDATA_PROVNC_LOGGING -g -O0
@@ -10,10 +12,10 @@ INCLUDES=-I$(HDF5_DIR)/include
 CFLAGS = $(DEBUG) -fPIC $(INCLUDES) -Wall
 #LIBS=-L$(HDF5_DIR)/lib -L$(MPI_DIR)/lib -lhdf5 -lz
 LIBS=-L$(HDF5_DIR)/lib -lhdf5 -lz
-# Uncomment this line Linux builds:
-DYNLDFLAGS = $(DEBUG) -shared -fPIC $(LIBS)
 # Uncomment this line MacOS builds:
 # DYNLDFLAGS = $(DEBUG) -dynamiclib -current_version 1.0 -fPIC $(LIBS)
+# Uncomment this line Linux builds:
+DYNLDFLAGS = $(DEBUG) -shared -fPIC $(LIBS)
 LDFLAGS = $(DEBUG) $(LIBS)
 ARFLAGS = rs
 
@@ -21,16 +23,17 @@ ARFLAGS = rs
 DYNSRC = H5VLprovnc.c
 DYNOBJ = $(DYNSRC:.c=.o)
 # Uncomment this line Linux builds:
-DYNLIB = H5VLprovnc.so
+DYNLIB = libh5prov.so
 # Uncomment this line MacOS builds:
 # DYNLIB = libh5prov.dylib
-# DYNDBG = libh5prov.dylib.dSYM
+DYNDBG = libh5prov.dylib.dSYM
+
 
 # Testcase section
-# EXSRC = vpicio_uni_h5.c
-# EXOBJ = $(EXSRC:.c=.o)
-# EXEXE = $(EXSRC:.c=.exe)
-# EXDBG = $(EXSRC:.c=.exe.dSYM)
+EXSRC = vpicio_uni_h5.c
+EXOBJ = $(EXSRC:.c=.o)
+EXEXE = $(EXSRC:.c=.exe)
+EXDBG = $(EXSRC:.c=.exe.dSYM)
 
 all: $(EXEXE) $(DYNLIB)
 
