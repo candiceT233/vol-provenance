@@ -31,8 +31,8 @@ typedef enum ProvLevel {
     Print_only,
     File_only,
     File_and_print,
-    Level3,
     Level4,
+    Level5,
     Disabled
 }Prov_level;
 
