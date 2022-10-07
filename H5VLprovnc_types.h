@@ -90,11 +90,15 @@ typedef struct H5VL_provenance_wrap_ctx_t {
 struct H5VL_prov_file_info_t {//assigned when a file is closed, serves to store stats (copied from shared_file_info)
     prov_helper_t* prov_helper;  //pointer shared among all layers, one per process.
     char* file_name;
-    char* intent;
     unsigned long file_no;
+
+    /* candice added for more stats start */
+    char* intent; // TODO: convert to unsigned int type for less conversion
     unsigned long sorder_id;
     unsigned long porder_id;
     hsize_t file_size;
+    /* candice added for more stats end */
+
 #ifdef H5_HAVE_PARALLEL
     // Only present for parallel HDF5 builds
     MPI_Comm mpi_comm;           // Copy of MPI communicator for file
@@ -139,14 +143,17 @@ struct H5VL_prov_dataset_info_t {
                                         // Must be first field in struct, for
                                         // generic upcasts to work
     
-    char * pfile_name; // parent file name
+
     H5T_class_t dt_class;               //data type class
     H5S_class_t ds_class;               //data space class
-    H5D_layout_t layout;
+    char * layout;                      // TODO: convert to unsigned int type for less conversion
     unsigned int dimension_cnt;
     hsize_t dimensions[H5S_MAX_RANK];
     size_t dset_type_size;
-    hsize_t dset_space_size;            //unsigned long long
+    hsize_t dset_space_size;            //unsigned long long TODO: same as nelements!
+
+    /* candice added for more stats start */
+    char * pfile_name;                  // parent file name
     haddr_t dset_offset;
     hsize_t storage_size;
     size_t dset_n_elements;
@@ -157,6 +164,7 @@ struct H5VL_prov_dataset_info_t {
     unsigned long porder_id;
     unsigned long pfile_sorder_id;
     unsigned long pfile_porder_id;
+    /* candice added for more stats end */
 
     hsize_t total_bytes_read;
     hsize_t total_bytes_written;

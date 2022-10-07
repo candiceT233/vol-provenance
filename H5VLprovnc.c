@@ -333,6 +333,7 @@ int prov_write(prov_helper_t* helper_in, const char* msg, unsigned long duration
 /* candice added routine prototypes start */
 char * file_get_intent(void *under_file, hid_t under_vol_id, hid_t dxpl_id);
 static hsize_t file_get_size(void *under_file, hid_t under_vol_id, hid_t dxpl_id);
+char * dataset_get_layout(hid_t plist_id);
 static hsize_t dataset_get_storage_size(void *under_dset, hid_t under_vol_id, hid_t dxpl_id);
 static haddr_t dataset_get_offset(void *under_dset, hid_t under_vol_id, hid_t dxpl_id);
 static hsize_t dataset_get_num_chunks(void *under_dset, hid_t under_vol_id, hid_t dxpl_id);
@@ -1557,7 +1558,6 @@ dataset_prov_info_t * new_ds_prov_info(void* under_object, hid_t vol_id, H5O_tok
     H5Sclose(ds_id);
 
     dcpl_id = dataset_get_dcpl(under_object, vol_id, dxpl_id);
-    ds_info->layout = H5Pget_layout(dcpl_id);
     H5Pclose(dcpl_id);
 
     return ds_info;
@@ -1668,6 +1668,7 @@ void dataset_info_print(char * func_name, void * obj, hid_t dxpl_id)
 
     printf("dset_name: %s, ", dset_info->obj_info.name); //TODO
     printf("dset_parent_file: %s, ", dset_info->pfile_name); //TODO
+    printf("dset_layout: %s, ", dset_info->layout); //TODO
 
     printf("dset_offset: %ld, ", dataset_get_offset(dset->under_object, dset->under_vol_id, dxpl_id));
 
@@ -1812,7 +1813,7 @@ void dump_dset_stat_yaml(FILE *f, const dataset_prov_info_t* dset_info)
         dset_info->pfile_sorder_id, dset_info->pfile_porder_id,
         dset_info->sorder_id, dset_info->porder_id);
     fprintf(f,"\t\tname: %s\n", dset_info->obj_info.name);
-    fprintf(f,"\t\tparent_file_name: %s\n",dset_info->pfile_name);
+    fprintf(f,"\t\tlayout: %s\n", dset_info->layout);
     fprintf(f,"\t\toffset: %ld\n", dset_info->dset_offset);
     fprintf(f,"\t\tdata_type_class: %d\n", dset_info->dt_class);
     fprintf(f,"\t\ttype_size: %d\n", dset_info->dset_type_size);
@@ -1896,6 +1897,24 @@ static hsize_t file_get_size(void *under_file, hid_t under_vol_id, hid_t dxpl_id
         return -1;
     
     return size;
+}
+
+char * dataset_get_layout(hid_t plist_id)
+{
+    H5D_layout_t layout = H5Pget_layout(plist_id);
+
+    if(layout == H5D_COMPACT)
+        return "H5D_COMPACT";
+    else if(layout == H5D_CONTIGUOUS)
+        return "H5D_CONTIGUOUS";
+    else if(layout == H5D_CHUNKED)
+        return "H5D_CHUNKED";
+    else if(layout == H5D_VIRTUAL)
+        return "H5D_VIRTUAL";
+    else if(layout == H5D_NLAYOUTS)
+        return "H5D_NLAYOUTS";
+    else 
+        return "H5D_LAYOUT_ERROR";
 }
 
 static haddr_t dataset_get_offset(void *under_dset, hid_t under_vol_id, hid_t dxpl_id)
@@ -3368,6 +3387,13 @@ H5VL_provenance_dataset_create(void *obj, const H5VL_loc_params_t *loc_params,
         dset_info->sorder_id =DSET_SORDER;
     }
 
+    if(!dset_info->layout)
+    {
+        // only valid with creation property list
+        char * layout = dataset_get_layout(dcpl_id); 
+        dset_info->layout = layout ? strdup(layout) : NULL;
+    }
+
     dataset_info_print("H5VLdataset_create", dset, dxpl_id);
 
     // get dataset offset and storage size not available yet
@@ -3496,7 +3522,6 @@ H5VL_provenance_dataset_read(void *dset, hid_t mem_type_id, hid_t mem_space_id,
     H5Pget_dxpl_mpio(plist_id, &xfer_mode);
 #endif /* H5_HAVE_PARALLEL */
 #ifdef DATA_PROVNC_LOGGING
-    // dataset_prov_info_t * dset_info = (dataset_prov_info_t*)o->generic_prov_info;
     // printf("H5VLdataset_read Time[%ld] DatasetName[%s]\n", get_time_usec(), dset_info->obj_info.name);
     dataset_info_print("H5VLdataset_read", dset, NULL);
 #endif
@@ -3585,7 +3610,6 @@ H5VL_provenance_dataset_write(void *dset, hid_t mem_type_id, hid_t mem_space_id,
     assert(dset_info);
     // printf("H5VLdataset_write Time[%ld] DatasetName[%s]", get_time_usec(),dset_info->obj_info.name);
     // printf(" FileName[%s]\n", dset_info->pfile_name);
-
     dataset_info_print("H5VLdataset_write", dset, NULL); //H5P_DATASET_XFER
 #endif
 //H5VLdataset_write: framework
@@ -5468,7 +5492,6 @@ H5VL_provenance_object_open(void *obj, const H5VL_loc_params_t *loc_params,
         dset_info->pfile_sorder_id = file_info->sorder_id;
         dset_info->pfile_porder_id = file_info->porder_id;
         
-
         if(file_info->opened_datasets_cnt > 2){
             DSET_PORDER+=1;
             dset_info->porder_id =DSET_PORDER;
@@ -5476,6 +5499,15 @@ H5VL_provenance_object_open(void *obj, const H5VL_loc_params_t *loc_params,
             DSET_SORDER+=1;
             dset_info->sorder_id =DSET_SORDER;
         }
+
+        if(!dset_info->layout)
+        {
+            hid_t dcpl_id = dataset_get_dcpl(new_obj->under_object, new_obj->under_vol_id,dxpl_id);
+            // only valid with creation property list
+            char * layout = dataset_get_layout(dcpl_id); 
+            dset_info->layout = layout ? strdup(layout) : NULL;
+        }
+
         dataset_info_print("H5VLobject_open", new_obj, dxpl_id);
     }
 #endif
