@@ -90,9 +90,11 @@ typedef struct H5VL_provenance_wrap_ctx_t {
 struct H5VL_prov_file_info_t {//assigned when a file is closed, serves to store stats (copied from shared_file_info)
     prov_helper_t* prov_helper;  //pointer shared among all layers, one per process.
     char* file_name;
+    char* intent;
     unsigned long file_no;
     unsigned long sorder_id;
     unsigned long porder_id;
+    hsize_t file_size;
 #ifdef H5_HAVE_PARALLEL
     // Only present for parallel HDF5 builds
     MPI_Comm mpi_comm;           // Copy of MPI communicator for file
