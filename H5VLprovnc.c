@@ -593,24 +593,24 @@ void dataset_stats_prov_write(const dataset_prov_info_t* dset_info){
         dset_info->porder_id);
     printf("Dataset parent file name = %s \n",dset_info->pfile_name);
     printf("Dataset type class = %d \n",dset_info->dt_class);
-    printf("Dataset type size = %d \n",dset_info->dset_type_size);
+    printf("Dataset type size = %ld \n",dset_info->dset_type_size);
     printf("Dataset space class = %d \n",dset_info->ds_class);
-    printf("Dataset space size = %d \n",dset_info->dset_space_size);
-    printf("Dataset storage size = %d \n",dset_info->storage_size);
-    printf("Dataset num elements = %d \n",dset_info->dset_n_elements);
+    printf("Dataset space size = %ld \n",dset_info->dset_space_size);
+    printf("Dataset storage size = %ld \n",dset_info->storage_size);
+    printf("Dataset num elements = %ld \n",dset_info->dset_n_elements);
     printf("Dataset dimension count = %u \n", dset_info->dimension_cnt);
     // print dimentions
     printf("Dataset dimensions = {");
     for (int i=0; i < dset_info->dimension_cnt; i++){
-    printf("%d,",dset_info->dimensions[i]);
+    printf("%ld,",dset_info->dimensions[i]);
     }
     printf("}\n");
-    printf("Dataset num hyperslab blocks = %d \n",dset_info->hyper_nblocks);
+    printf("Dataset num hyperslab blocks = %ld \n",dset_info->hyper_nblocks);
     printf("Dataset offset = %ld \n", dset_info->dset_offset);
-    printf("Dataset is read %d time, %llu bytes in total, costs %llu us.\n", dset_info->dataset_read_cnt, dset_info->total_bytes_read, dset_info->total_read_time);
-    printf("Dataset is written %d time, %llu bytes in total, costs %llu us.\n", dset_info->dataset_write_cnt, dset_info->total_bytes_written, dset_info->total_write_time);
-    printf("Data Blob is get %d time, %llu bytes in total, costs %llu us.\n", dset_info->blob_get_cnt, dset_info->total_bytes_blob_get, dset_info->total_blob_get_time);
-    printf("Data Blob is put %d time, %llu bytes in total, costs %llu us.\n", dset_info->blob_put_cnt, dset_info->total_bytes_blob_put, dset_info->total_blob_put_time);
+    printf("Dataset is read %d time, %lu bytes in total, costs %lu us.\n", dset_info->dataset_read_cnt, dset_info->total_bytes_read, dset_info->total_read_time);
+    printf("Dataset is written %d time, %lu bytes in total, costs %lu us.\n", dset_info->dataset_write_cnt, dset_info->total_bytes_written, dset_info->total_write_time);
+    printf("Data Blob is get %d time, %lu bytes in total, costs %lu us.\n", dset_info->blob_get_cnt, dset_info->total_bytes_blob_get, dset_info->total_blob_get_time);
+    printf("Data Blob is put %d time, %lu bytes in total, costs %lu us.\n", dset_info->blob_put_cnt, dset_info->total_bytes_blob_put, dset_info->total_blob_put_time);
     printf("Dataset Close Statistic Summary End =============================================\n");
 
     // prov_dump_open_things(PROV_HELPER->prov_file_handle);
@@ -1660,6 +1660,9 @@ void dataset_info_print(char * func_name, void * obj, hid_t dxpl_id)
 
     printf("{dataset: ");
     printf("{func_name: %s, ", func_name);
+    printf("obj: %p, ", obj);
+    printf("under_obj: %p, ", dset->under_object);
+    printf("dxpl_id: %ld, ", dxpl_id);
     printf("time(us): %ld, ", get_time_usec());
 
     // if(dset_info->obj_info.name){
@@ -1677,7 +1680,7 @@ void dataset_info_print(char * func_name, void * obj, hid_t dxpl_id)
     printf("dset_nchunks: %ld, ", dataset_get_num_chunks(dset->under_object, dset->under_vol_id, dxpl_id));
     printf("dset_vlen_buf_size: %ld, ", dataset_get_vlen_buf_size(dset->under_object, dset->under_vol_id, dxpl_id));
     
-    printf("dset_type_size:%d, ", H5Tget_size(space_id));
+    printf("dset_type_size: %ld, ", H5Tget_size(space_id));
 
     hid_t type_id = dataset_get_type(dset->under_object, dset->under_vol_id, dxpl_id);
 
@@ -1693,7 +1696,7 @@ void dataset_info_print(char * func_name, void * obj, hid_t dxpl_id)
     // print dimensions
     printf("dimensions: [");
     for(int i=0; i<ndim; i++){
-        printf("%ld",dimensions[i]);
+        printf("%ld,",dimensions[i]);
     }
     printf("], ");
 
@@ -1711,6 +1714,9 @@ void file_info_print(char * func_name, void * obj, hid_t dxpl_id)
 
     printf("{file: ");
     printf("{func_name: %s, ", func_name);
+    printf("obj: %p, ", obj);
+    printf("under_obj: %p, ", file->under_object);
+    printf("dxpl_id: %ld, ", dxpl_id);
     printf("time(us): %ld, ", get_time_usec());
     printf("file_name: %s, ", file_info->file_name);
     printf("file_no: %d, ", file_info->file_no); 
@@ -1757,13 +1763,16 @@ void blob_info_print(char * func_name, void * obj, hid_t dxpl_id, size_t size, h
 
         printf("{blob: ");
         printf("{func_name: %s, ", func_name);
+        // printf("obj: %p, ", obj);
+        // printf("under_obj: %p, ", file->under_object);
+        printf("dxpl_id: %ld, ", dxpl_id);
         printf("blob_id: %p, ", blob_id); //%p
         printf("blob_size: %ld, ", size);
 
         // file_info_print(func_name, file, dxpl_id);
 
         printf("file_name: %s, ", file_info->file_name);
-        printf("file_no: %d, ", file_info->file_no); 
+        printf("file_no: %ld, ", file_info->file_no); 
 
         // calling this results in additional get_object call
         // int ndset = H5Fget_obj_count(H5F_OBJ_ALL,H5F_OBJ_DATASET); 
@@ -1792,7 +1801,7 @@ void dump_file_stat_yaml(FILE *f, const file_prov_info_t* file_info)
         return;
     }
     
-    fprintf(f,"file-%ld_%ld:\n",file_info->sorder_id, file_info->porder_id);
+    fprintf(f,"- file-%ld_%ld:\n",file_info->sorder_id, file_info->porder_id);
     fprintf(f,"\tname: %s\n", file_info->file_name);
     fprintf(f,"\tsize: %ld\n", file_info->file_size);
     fprintf(f,"\tintent: %s\n", file_info->intent);
@@ -1806,18 +1815,18 @@ void dump_dset_stat_yaml(FILE *f, const dataset_prov_info_t* dset_info)
         return;
     }
 
-    fprintf(f,"file-%ld_%ld:\n",dset_info->pfile_sorder_id, dset_info->pfile_porder_id);
+    fprintf(f,"- file-%ld_%ld:\n",dset_info->pfile_sorder_id, dset_info->pfile_porder_id);
     fprintf(f,"\tname: %s\n", dset_info->pfile_name);
 
-    fprintf(f,"\tdset-%d_%d-%d_%d:\n",
+    fprintf(f,"\tdset-%ld_%ld-%ld_%ld:\n",
         dset_info->pfile_sorder_id, dset_info->pfile_porder_id,
         dset_info->sorder_id, dset_info->porder_id);
     fprintf(f,"\t\tname: %s\n", dset_info->obj_info.name);
     fprintf(f,"\t\tlayout: %s\n", dset_info->layout);
     fprintf(f,"\t\toffset: %ld\n", dset_info->dset_offset);
     fprintf(f,"\t\tdata_type_class: %d\n", dset_info->dt_class);
-    fprintf(f,"\t\ttype_size: %d\n", dset_info->dset_type_size);
-    fprintf(f,"\t\tn_elements: %ld\n", dset_info->dset_n_elements);
+    fprintf(f,"\t\ttype_size: %ld\n", dset_info->dset_type_size);
+    fprintf(f,"\t\tn_elements: %d\n", dset_info->dset_n_elements);
     fprintf(f,"\t\tstorage_size: %ld\n", dset_info->storage_size);
     fprintf(f,"\t\tn_dimension: %ld\n", dset_info->dimension_cnt);
     fprintf(f,"\t\tdimensions: [");
@@ -1827,23 +1836,23 @@ void dump_dset_stat_yaml(FILE *f, const dataset_prov_info_t* dset_info)
     fprintf(f,"]\n");
     unsigned long total_io_size;
     if(dset_info->dataset_read_cnt > 0){
-        fprintf(f,"\t\tread_cnt: %d\n", dset_info->dataset_read_cnt);
+        fprintf(f,"\t\tread_cnt: %ld\n", dset_info->dataset_read_cnt);
         total_io_size = dset_info->total_bytes_read;
         if(dset_info->blob_get_cnt > 0){
             fprintf(f,"\t\tblob_get_cnt: %ld\n", dset_info->blob_get_cnt);
             total_io_size+=dset_info->total_bytes_blob_get;
         }
-        fprintf(f,"\t\tread_io_size: %d\n", total_io_size);
+        fprintf(f,"\t\tread_io_size: %ld\n", total_io_size);
     }
 
     if(dset_info->dataset_write_cnt > 0){
-        fprintf(f,"\t\twrite_cnt: %d\n", dset_info->dataset_write_cnt);
+        fprintf(f,"\t\twrite_cnt: %ld\n", dset_info->dataset_write_cnt);
         total_io_size = dset_info->total_bytes_written;
         if(dset_info->blob_put_cnt > 0){
             fprintf(f,"\t\tblob_put_cnt: %ld\n", dset_info->blob_put_cnt);
             total_io_size+=dset_info->total_bytes_blob_put;
         }
-        fprintf(f,"\t\twrite_io_size: %d\n", total_io_size);
+        fprintf(f,"\t\twrite_io_size: %ld\n", total_io_size);
     }
 
 }
@@ -6083,12 +6092,8 @@ H5VL_provenance_blob_put(void *obj, const void *buf, size_t size,
 #ifdef DATA_PROVNC_LOGGING
 
     // printf("H5VLblob_put Time[%ld] BLOBID[%p] Size[%ld]",get_time_usec(), blob_id, size);
-
     // file_prov_info_t* file_info = (file_prov_info_t*)o->generic_prov_info;
     // dataset_prov_info_t * dset_info = (dataset_prov_info_t*)file_info->opened_datasets;
-    
-    // printf(" DatasetName[%s]", dset_info->obj_info.name);
-    // printf(" FileName[%s]\n", dset_info->pfile_name);
 #endif
     m1 = get_time_usec();
     ret_value = H5VLblob_put(o->under_object, o->under_vol_id, buf, size,

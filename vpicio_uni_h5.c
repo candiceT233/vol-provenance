@@ -40,6 +40,8 @@
 
 #include "hdf5.h"
 #include "H5VLprovnc.h"
+#include "H5VLprovnc_types.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

@@ -35,7 +35,7 @@ EXOBJ = $(EXSRC:.c=.o)
 EXEXE = $(EXSRC:.c=.exe)
 EXDBG = $(EXSRC:.c=.exe.dSYM)
 
-all: $(EXEXE) $(DYNLIB)
+all: $(DYNLIB) #$(EXEXE) 
 
 $(EXEXE): $(EXSRC) $(STATLIB) $(DYNLIB)
 	$(CC) $(CFLAGS) $^ -o $(EXEXE) $(LDFLAGS)
